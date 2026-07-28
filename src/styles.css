@@ -1,0 +1,348 @@
+@font-face {
+  font-family: "Geist";
+  src: url("../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2")
+    format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --color-background: #f3f2ec;
+  --color-text-primary: #1f1f1d;
+  --color-text-secondary: #6f6a63;
+  --color-border: #ddd7cf;
+  --color-accent: #6f7562;
+  --page-max-width: 1240px;
+  --page-inline-padding: clamp(1.25rem, 3vw, 2.75rem);
+  --section-gap: clamp(2rem, 4vw, 3.5rem);
+  --gallery-gap: clamp(0.875rem, 1.6vw, 1.25rem);
+  --frame-radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: "Geist", "Arial", sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+}
+
+.site-shell {
+  min-height: 100vh;
+}
+
+.site-header,
+.page-content {
+  width: min(100%, calc(var(--page-max-width) + (var(--page-inline-padding) * 2)));
+  margin: 0 auto;
+  padding-inline: var(--page-inline-padding);
+}
+
+.site-header {
+  padding-top: 1.5rem;
+}
+
+.site-nav,
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.95fr);
+  column-gap: clamp(2rem, 4vw, 4.5rem);
+  align-items: start;
+}
+
+.site-nav {
+  min-height: 3rem;
+  align-items: baseline;
+}
+
+.site-brand {
+  align-self: baseline;
+  font-size: 1.22rem;
+  font-weight: 450;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.site-nav__list {
+  display: flex;
+  justify-content: flex-start;
+  justify-self: end;
+  gap: clamp(1.6rem, 2vw, 2.45rem);
+  align-items: baseline;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-nav__link {
+  position: relative;
+  color: var(--color-text-secondary);
+  font-size: 1.04rem;
+  font-weight: 400;
+  line-height: 1.15;
+  transition: color 160ms ease;
+}
+
+.site-nav__link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.18rem;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 180ms ease;
+}
+
+.site-nav__link:hover,
+.site-nav__link:focus-visible {
+  color: var(--color-text-primary);
+}
+
+.site-nav__link:hover::after,
+.site-nav__link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.page-content {
+  position: relative;
+  padding-top: clamp(2.5rem, 5vh, 4rem);
+  padding-bottom: 2rem;
+}
+
+.page-content::after {
+  content: "";
+  position: absolute;
+  left: var(--page-inline-padding);
+  right: var(--page-inline-padding);
+  top: clamp(18.5rem, 36vh, 23.5rem);
+  height: clamp(5.5rem, 9vh, 7.25rem);
+  background: linear-gradient(
+    180deg,
+    rgba(243, 242, 236, 0) 0%,
+    rgba(221, 215, 207, 0.09) 54%,
+    rgba(243, 242, 236, 0.03) 100%
+  );
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.hero {
+  min-height: clamp(362px, 44.9vh, 452px);
+}
+
+.hero__copy {
+  max-width: 34rem;
+  padding-top: clamp(1.2rem, 2vw, 2rem);
+}
+
+.hero h1 {
+  margin: 0;
+  max-width: 12ch;
+  font-size: clamp(2.75rem, 5vw, 4.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  font-weight: 430;
+  text-wrap: balance;
+}
+
+.hero p {
+  margin: 1.1rem 0 0;
+  max-width: 25rem;
+  color: var(--color-text-secondary);
+  font-size: clamp(1rem, 1.35vw, 1.12rem);
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.hero__visual {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-height: 100%;
+}
+
+.hero__visual img {
+  width: min(146%, 55rem);
+  max-width: none;
+  max-height: clamp(420px, 60vh, 620px);
+  object-fit: contain;
+  object-position: left top;
+  transform: translate(-1.4rem, -0.8rem);
+}
+
+.work-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gallery-gap);
+  margin-top: -3rem;
+}
+
+.work-gallery__item {
+  margin: 0;
+  min-width: 0;
+}
+
+.work-gallery__frame {
+  aspect-ratio: 1 / 0.72;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--frame-radius);
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.work-gallery__frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.work-gallery__meta {
+  margin-top: 0.8rem;
+}
+
+.work-gallery__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.work-gallery__name {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 420;
+  line-height: 1.3;
+}
+
+.work-gallery__arrow {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.work-gallery__category {
+  margin: 0.12rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.97rem;
+  line-height: 1.45;
+}
+
+@media (min-width: 961px) {
+  .work-gallery {
+    margin-top: -3rem;
+  }
+}
+
+@media (max-width: 960px) {
+  .site-nav,
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .site-nav {
+    row-gap: 1rem;
+  }
+
+  .site-nav__list {
+    justify-content: flex-start;
+    justify-self: auto;
+    flex-wrap: wrap;
+    column-gap: 1.25rem;
+    row-gap: 0.75rem;
+  }
+
+  .page-content {
+    padding-top: 2rem;
+  }
+
+  .page-content::after {
+    content: none;
+  }
+
+  .hero {
+    row-gap: 1.5rem;
+    min-height: auto;
+  }
+
+  .hero__copy {
+    max-width: 34rem;
+    padding-top: 0;
+  }
+
+  .hero__visual {
+    max-width: 40rem;
+  }
+
+  .hero__visual img {
+    width: 100%;
+    max-width: 100%;
+    max-height: 420px;
+    transform: none;
+  }
+
+  .work-gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .site-header {
+    padding-top: 1.25rem;
+  }
+
+  .site-nav__list {
+    gap: 0.9rem 1rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 12vw, 3.5rem);
+  }
+
+  .hero p {
+    margin-top: 1.25rem;
+  }
+
+  .hero__visual img {
+    max-height: 280px;
+  }
+
+  .work-gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .work-gallery__frame {
+    aspect-ratio: 1 / 0.86;
+  }
+}
