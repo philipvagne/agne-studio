@@ -32,8 +32,8 @@ const workItems = [
 const homepageNavItems = [
   { label: "Work", href: "/#work" },
   { label: "Pricing", href: "/pricing/" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Contact", href: "/#contact" },
+  { label: "FAQ", href: "/faq/" },
+  { label: "Contact", href: "/contact/" },
 ];
 
 const audiences = [
@@ -276,6 +276,77 @@ const pricingFaqs = [
   },
 ];
 
+const faqPageItems = [
+  {
+    question: "What types of websites do you build?",
+    answer:
+      "I build focused landing pages, multi-page business websites and larger custom websites. Each project is tailored to the goals, content and requirements of the business rather than built from a fixed template.",
+  },
+  {
+    question: "How much does a website cost?",
+    answer: (
+      <>
+        Landing pages currently start from $350 and business websites start
+        from $700. Larger or more complex websites receive a custom quote
+        based on their scope and requirements. You can find the current
+        starting prices on the <a href="/pricing/">Pricing page</a>.
+      </>
+    ),
+  },
+  {
+    question: "How long does a project take?",
+    answer:
+      "Project timelines vary depending on the scope, required functionality and how quickly content and feedback are provided. Before we begin, we'll agree on a realistic timeline so you always know what to expect throughout the project.",
+  },
+  {
+    question: "What is included in a standard project?",
+    answer: (
+      <>
+        Standard projects include custom design, responsive development, basic
+        search-engine setup, a contact form where required, testing and
+        support during launch. The exact inclusions depend on the selected
+        service and agreed scope. More detail is available on the{" "}
+        <a href="/pricing/">Pricing page</a>.
+      </>
+    ),
+  },
+  {
+    question: "How many revisions are included?",
+    answer:
+      "Standard projects include two structured design revision rounds and one final refinement round. Additional revisions or work outside the agreed scope can be quoted separately.",
+  },
+  {
+    question: "Do I need to provide the text and images?",
+    answer:
+      "Clients normally provide their final text, images, brand assets and any required legal information. Copywriting, branding assistance and other content-related services can be discussed as optional additions.",
+  },
+  {
+    question: "Can you redesign an existing website?",
+    answer:
+      "Yes. Existing websites can be redesigned when the project is a good fit. The current site, content, technical setup and goals will be reviewed before confirming the scope.",
+  },
+  {
+    question: "Do you provide hosting and maintenance?",
+    answer:
+      "Hosting and ongoing maintenance can be included as optional services. The exact arrangement depends on the website and the level of ongoing support required.",
+  },
+  {
+    question: "What happens after the website launches?",
+    answer:
+      "I help make sure the website is launched correctly and that the agreed pages and functionality are working as expected. Ongoing hosting, maintenance and future improvements can be discussed separately.",
+  },
+  {
+    question: "How do we get started?",
+    answer: (
+      <>
+        You can begin by completing the <a href="/#contact">Start a Project form</a>{" "}
+        with a short description of your business, goals and website needs. I
+        will review the information and get back to you about the next step.
+      </>
+    ),
+  },
+];
+
 function SiteNav() {
   return (
     <header className="site-header">
@@ -303,18 +374,20 @@ function SiteNav() {
   );
 }
 
-function FinalCta() {
+function FinalCta({
+  title = "Let's build a website that reflects your business.",
+  copy = "Tell me what you need, where your current website falls short, or simply what you're considering. We can take it from there.",
+  buttonLabel = "Start a project",
+  buttonHref = "/#contact",
+}) {
   return (
     <section className="final-cta" aria-labelledby="final-cta-title">
       <h2 id="final-cta-title" className="final-cta__title">
-        Let&apos;s build a website that reflects your business.
+        {title}
       </h2>
-      <p className="final-cta__copy">
-        Tell me what you need, where your current website falls short, or
-        simply what you&apos;re considering. We can take it from there.
-      </p>
-      <a className="cta-pill cta-pill--final" href="/#contact">
-        <span>Start a project</span>
+      <p className="final-cta__copy">{copy}</p>
+      <a className="cta-pill cta-pill--final" href={buttonHref}>
+        <span>{buttonLabel}</span>
         <span aria-hidden="true">&rarr;</span>
       </a>
     </section>
@@ -331,6 +404,239 @@ function SignatureFooter() {
         <p className="signature-footer__copyright">{COPYRIGHT_TEXT}</p>
       </div>
     </footer>
+  );
+}
+
+function ContactForm() {
+  const defaultValues = {
+    name: "",
+    email: "",
+    message: "",
+    company: "",
+  };
+  const [values, setValues] = React.useState(defaultValues);
+  const [errors, setErrors] = React.useState({});
+  const [submitState, setSubmitState] = React.useState("idle");
+  const [submitError, setSubmitError] = React.useState("");
+  const successHeadingRef = React.useRef(null);
+  const errorMessageRef = React.useRef(null);
+
+  const validate = React.useCallback((nextValues) => {
+    const nextErrors = {};
+
+    if (!nextValues.name.trim()) {
+      nextErrors.name = "Please enter your name.";
+    }
+
+    if (!nextValues.email.trim()) {
+      nextErrors.email = "Please enter your email address.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextValues.email)) {
+      nextErrors.email = "Please enter a valid email address.";
+    }
+
+    if (!nextValues.message.trim()) {
+      nextErrors.message = "Please enter a short message.";
+    }
+
+    return nextErrors;
+  }, []);
+
+  React.useEffect(() => {
+    if (submitState === "success") {
+      successHeadingRef.current?.focus();
+    }
+
+    if (submitState === "error") {
+      errorMessageRef.current?.focus();
+    }
+  }, [submitState]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setValues((currentValues) => ({
+      ...currentValues,
+      [name]: value,
+    }));
+
+    setErrors((currentErrors) => {
+      if (!currentErrors[name]) {
+        return currentErrors;
+      }
+
+      const nextErrors = { ...currentErrors };
+      delete nextErrors[name];
+      return nextErrors;
+    });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (submitState === "submitting") {
+      return;
+    }
+
+    const nextErrors = validate(values);
+    setErrors(nextErrors);
+    setSubmitError("");
+
+    if (Object.keys(nextErrors).length > 0) {
+      setSubmitState("idle");
+      return;
+    }
+
+    setSubmitState("submitting");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to send message.");
+      }
+
+      setSubmitState("success");
+      setValues(defaultValues);
+      setErrors({});
+    } catch (error) {
+      setSubmitState("error");
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while sending your message. Please try again.",
+      );
+    }
+  };
+
+  if (submitState === "success") {
+    return (
+      <div className="contact-success" aria-live="polite">
+        <h2 ref={successHeadingRef} className="contact-success__title" tabIndex="-1">
+          Message sent
+        </h2>
+        <p>Thanks for getting in touch.</p>
+        <p>I&apos;ve received your message and will get back to you as soon as I can.</p>
+        <button
+          className="contact-success__reset"
+          type="button"
+          onClick={() => {
+            setValues(defaultValues);
+            setErrors({});
+            setSubmitError("");
+            setSubmitState("idle");
+          }}
+        >
+          Send another message
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form className="contact-form" noValidate onSubmit={handleSubmit}>
+      <div className="contact-form__field contact-form__field--honeypot" aria-hidden="true">
+        <label htmlFor="contact-company">Company</label>
+        <input
+          id="contact-company"
+          name="company"
+          type="text"
+          autoComplete="off"
+          tabIndex="-1"
+          value={values.company}
+          onChange={handleChange}
+        />
+      </div>
+
+      <div className="contact-form__field">
+        <label htmlFor="contact-name">Name</label>
+        <input
+          id="contact-name"
+          name="name"
+          type="text"
+          autoComplete="name"
+          value={values.name}
+          onChange={handleChange}
+          aria-invalid={Boolean(errors.name)}
+          aria-describedby={errors.name ? "contact-name-error" : undefined}
+          required
+        />
+        {errors.name ? (
+          <p id="contact-name-error" className="contact-form__error">
+            {errors.name}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="contact-form__field">
+        <label htmlFor="contact-email">Email</label>
+        <input
+          id="contact-email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={values.email}
+          onChange={handleChange}
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? "contact-email-error" : undefined}
+          required
+        />
+        {errors.email ? (
+          <p id="contact-email-error" className="contact-form__error">
+            {errors.email}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="contact-form__field">
+        <label htmlFor="contact-message">Message</label>
+        <textarea
+          id="contact-message"
+          name="message"
+          autoComplete="off"
+          value={values.message}
+          onChange={handleChange}
+          aria-invalid={Boolean(errors.message)}
+          aria-describedby={errors.message ? "contact-message-error" : undefined}
+          required
+        />
+        {errors.message ? (
+          <p id="contact-message-error" className="contact-form__error">
+            {errors.message}
+          </p>
+        ) : null}
+      </div>
+
+      {submitState === "error" ? (
+        <p
+          ref={errorMessageRef}
+          className="contact-form__submit-error"
+          aria-live="assertive"
+          tabIndex="-1"
+        >
+          {submitError || "Something went wrong while sending your message. Please try again."}
+        </p>
+      ) : null}
+
+      <div className="contact-form__actions">
+        <button
+          className="cta-pill contact-form__submit"
+          type="submit"
+          disabled={submitState === "submitting"}
+        >
+          <span>{submitState === "submitting" ? "Sending..." : "Send message"}</span>
+        </button>
+        <p className="contact-form__privacy">
+          Your information will only be used to respond to your enquiry.
+        </p>
+      </div>
+    </form>
   );
 }
 
@@ -418,12 +724,12 @@ function HomePage() {
   );
 }
 
-function PricingFaqAccordion() {
-  const [openIndex, setOpenIndex] = React.useState(0);
+function FaqAccordion({ items, initiallyOpenIndex = 0 }) {
+  const [openIndex, setOpenIndex] = React.useState(initiallyOpenIndex);
 
   return (
     <div className="pricing-faq">
-      {pricingFaqs.map((item, index) => {
+      {items.map((item, index) => {
         const isOpen = openIndex === index;
         const buttonId = `pricing-faq-button-${index}`;
         const panelId = `pricing-faq-panel-${index}`;
@@ -452,13 +758,17 @@ function PricingFaqAccordion() {
               aria-labelledby={buttonId}
               hidden={!isOpen}
             >
-              <p>{item.answer}</p>
+              <div className="pricing-faq__answer">{item.answer}</div>
             </div>
           </div>
         );
       })}
     </div>
   );
+}
+
+function PricingFaqAccordion() {
+  return <FaqAccordion items={pricingFaqs} initiallyOpenIndex={-1} />;
 }
 
 function PricingDetailModal({ modal, onClose, returnFocusRef }) {
@@ -777,18 +1087,103 @@ function PricingPage() {
   );
 }
 
+function FaqPage() {
+  return (
+    <>
+      <section className="faq-page">
+        <section className="faq-hero" aria-labelledby="faq-heading">
+          <div className="faq-hero__content">
+            <h1 id="faq-heading">Frequently asked questions</h1>
+            <p>
+              Answers to common questions about services, pricing, the project
+              process and what happens after launch.
+            </p>
+          </div>
+        </section>
+
+        <section className="faq-page__accordion" aria-label="Frequently asked questions">
+          <FaqAccordion items={faqPageItems} initiallyOpenIndex={-1} />
+        </section>
+      </section>
+
+      <FinalCta
+        title="Still have a question?"
+        copy="Every project is different. If you cannot find the answer you need, feel free to get in touch and tell me a little about what you are planning."
+        buttonLabel="Get in touch"
+        buttonHref="/contact/"
+      />
+      <SignatureFooter />
+    </>
+  );
+}
+
+function ContactPage() {
+  return (
+    <>
+      <section className="contact-page">
+        <section className="contact-layout" aria-labelledby="contact-heading">
+          <div className="contact-layout__info">
+            <h1 id="contact-heading">Get in touch</h1>
+            <p className="contact-layout__intro">
+              Have a question, want to discuss an idea or simply need a little
+              more information? Send me a message and I&apos;ll get back to you
+              as soon as I can.
+            </p>
+
+            <div className="contact-details">
+              <div className="contact-details__item">
+                <p className="contact-details__label">Response time</p>
+                <p>I aim to reply to all enquiries within 1-2 business days.</p>
+              </div>
+
+              <div className="contact-details__item">
+                <p className="contact-details__label">Ready to discuss a website?</p>
+                <p>
+                  For a more detailed project enquiry, use the{" "}
+                  <a className="inline-link" href="/#contact">
+                    Start a Project
+                  </a>{" "}
+                  form.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="contact-layout__form">
+            <ContactForm />
+          </div>
+        </section>
+      </section>
+
+      <SignatureFooter />
+    </>
+  );
+}
+
 function App() {
   const normalizedPath =
     window.location.pathname.replace(/\/+$/, "") || "/";
   const isPricingPage = normalizedPath === "/pricing";
+  const isFaqPage = normalizedPath === "/faq";
+  const isContactPage = normalizedPath === "/contact";
 
   return (
     <div className="site-shell">
       <SiteNav />
       <main
-        className={`page-content ${isPricingPage ? "page-content--pricing" : ""}`.trim()}
+        className={`page-content ${
+          isPricingPage || isFaqPage || isContactPage ? "page-content--pricing" : ""
+        }`.trim()}
       >
-        {isPricingPage ? <PricingPage /> : <HomePage />}
+        {isPricingPage ? (
+          <PricingPage />
+        ) : isFaqPage ? (
+          <FaqPage />
+        ) : isContactPage ? (
+          <ContactPage />
+        ) : (
+          <HomePage />
+        )}
       </main>
     </div>
   );
