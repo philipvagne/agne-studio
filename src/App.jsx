@@ -7,6 +7,7 @@ import placeholderThree from "../assets/work/placeholder-3.png";
 const SITE_NAME = "Agn\u00e9 Studio";
 const COPYRIGHT_TEXT = "\u00a9 2026";
 const CREDIT_TEXT = "Designed and developed by Philip Agn\u00e9.";
+const START_PROJECT_PATH = "/start-a-project/";
 
 const workItems = [
   {
@@ -34,6 +35,23 @@ const homepageNavItems = [
   { label: "Pricing", href: "/pricing/" },
   { label: "FAQ", href: "/faq/" },
   { label: "Contact", href: "/contact/" },
+];
+
+const projectTypeOptions = [
+  { value: "", label: "Select a project type" },
+  { value: "landing-page", label: "Landing page" },
+  { value: "business-website", label: "Business website" },
+  { value: "website-redesign", label: "Website redesign" },
+  { value: "something-else", label: "Something else" },
+];
+
+const timelineOptions = [
+  { value: "", label: "Select a timeline" },
+  { value: "as-soon-as-possible", label: "As soon as possible" },
+  { value: "within-2-4-weeks", label: "Within 2-4 weeks" },
+  { value: "within-1-2-months", label: "Within 1-2 months" },
+  { value: "within-3-4-months", label: "Within 3-4 months" },
+  { value: "flexible-not-sure-yet", label: "Flexible / not sure yet" },
 ];
 
 const audiences = [
@@ -339,7 +357,8 @@ const faqPageItems = [
     question: "How do we get started?",
     answer: (
       <>
-        You can begin by completing the <a href="/#contact">Start a Project form</a>{" "}
+        You can begin by completing the{" "}
+        <a href={START_PROJECT_PATH}>Start a Project form</a>{" "}
         with a short description of your business, goals and website needs. I
         will review the information and get back to you about the next step.
       </>
@@ -364,7 +383,7 @@ function SiteNav() {
               </li>
             ))}
           </ul>
-          <a className="cta-pill cta-pill--nav" href="/#contact">
+          <a className="cta-pill cta-pill--nav" href={START_PROJECT_PATH}>
             <span>Start a project</span>
             <span aria-hidden="true">&rarr;</span>
           </a>
@@ -378,7 +397,7 @@ function FinalCta({
   title = "Let's build a website that reflects your business.",
   copy = "Tell me what you need, where your current website falls short, or simply what you're considering. We can take it from there.",
   buttonLabel = "Start a project",
-  buttonHref = "/#contact",
+  buttonHref = START_PROJECT_PATH,
 }) {
   return (
     <section className="final-cta" aria-labelledby="final-cta-title">
@@ -493,7 +512,10 @@ function ContactForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          formType: "contact",
+          ...values,
+        }),
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -634,6 +656,431 @@ function ContactForm() {
         </button>
         <p className="contact-form__privacy">
           Your information will only be used to respond to your enquiry.
+        </p>
+      </div>
+    </form>
+  );
+}
+
+function ProjectEnquiryForm() {
+  const defaultValues = {
+    name: "",
+    email: "",
+    business: "",
+    website: "",
+    projectType: "",
+    timeline: "",
+    details: "",
+    company: "",
+  };
+  const [values, setValues] = React.useState(defaultValues);
+  const [errors, setErrors] = React.useState({});
+  const [submitState, setSubmitState] = React.useState("idle");
+  const [submitError, setSubmitError] = React.useState("");
+  const successHeadingRef = React.useRef(null);
+  const errorMessageRef = React.useRef(null);
+
+  const isValidWebsite = React.useCallback((value) => {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return true;
+    }
+
+    const candidate = /^https?:\/\//i.test(trimmedValue)
+      ? trimmedValue
+      : `https://${trimmedValue}`;
+
+    try {
+      const parsedUrl = new URL(candidate);
+      return /^https?:$/i.test(parsedUrl.protocol) && parsedUrl.hostname.includes(".");
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const validate = React.useCallback(
+    (nextValues) => {
+      const nextErrors = {};
+
+      if (!nextValues.name.trim()) {
+        nextErrors.name = "Please enter your name.";
+      }
+
+      if (!nextValues.email.trim()) {
+        nextErrors.email = "Please enter your email address.";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextValues.email)) {
+        nextErrors.email = "Please enter a valid email address.";
+      }
+
+      if (nextValues.website.trim() && !isValidWebsite(nextValues.website)) {
+        nextErrors.website = "Please enter a valid website address.";
+      }
+
+      if (!nextValues.projectType) {
+        nextErrors.projectType = "Please select a project type.";
+      }
+
+      if (!nextValues.timeline) {
+        nextErrors.timeline = "Please select a desired timeline.";
+      }
+
+      if (!nextValues.details.trim()) {
+        nextErrors.details = "Please tell me a little about the project.";
+      }
+
+      return nextErrors;
+    },
+    [isValidWebsite],
+  );
+
+  React.useEffect(() => {
+    if (submitState === "success") {
+      successHeadingRef.current?.focus();
+    }
+
+    if (submitState === "error") {
+      errorMessageRef.current?.focus();
+    }
+  }, [submitState]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setValues((currentValues) => ({
+      ...currentValues,
+      [name]: value,
+    }));
+
+    setErrors((currentErrors) => {
+      if (!currentErrors[name]) {
+        return currentErrors;
+      }
+
+      const nextErrors = { ...currentErrors };
+      delete nextErrors[name];
+      return nextErrors;
+    });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (submitState === "submitting") {
+      return;
+    }
+
+    const nextErrors = validate(values);
+    setErrors(nextErrors);
+    setSubmitError("");
+
+    if (Object.keys(nextErrors).length > 0) {
+      setSubmitState("idle");
+      return;
+    }
+
+    setSubmitState("submitting");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          formType: "project",
+          ...values,
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          payload.error || "Unable to send your enquiry right now. Please try again shortly.",
+        );
+      }
+
+      setSubmitState("success");
+      setValues(defaultValues);
+      setErrors({});
+    } catch (error) {
+      setSubmitState("error");
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Unable to send your enquiry right now. Please try again shortly.",
+      );
+    }
+  };
+
+  if (submitState === "success") {
+    return (
+      <div className="contact-success" aria-live="polite">
+        <h2 ref={successHeadingRef} className="contact-success__title" tabIndex="-1">
+          Enquiry sent
+        </h2>
+        <p>Thanks for telling me about your project.</p>
+        <p>
+          I&apos;ve received your enquiry and will review the details before getting
+          back to you within 1-2 business days.
+        </p>
+        <button
+          className="contact-success__reset"
+          type="button"
+          onClick={() => {
+            setValues(defaultValues);
+            setErrors({});
+            setSubmitError("");
+            setSubmitState("idle");
+          }}
+        >
+          Send another enquiry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form className="contact-form" noValidate onSubmit={handleSubmit}>
+      <div className="contact-form__field contact-form__field--honeypot" aria-hidden="true">
+        <label htmlFor="project-company">Company</label>
+        <input
+          id="project-company"
+          name="company"
+          type="text"
+          autoComplete="off"
+          tabIndex="-1"
+          value={values.company}
+          onChange={handleChange}
+        />
+      </div>
+
+      <p className="contact-form__required-note">
+        <span aria-hidden="true">*</span> Required fields
+      </p>
+
+      <div className="contact-form__row contact-form__row--two-up">
+        <div className="contact-form__field">
+          <label htmlFor="project-name">
+            Name
+            <span className="contact-form__required-indicator" aria-hidden="true">
+              {" "}*
+            </span>
+            <span className="sr-only"> required</span>
+          </label>
+          <input
+            id="project-name"
+            name="name"
+            type="text"
+            autoComplete="name"
+            value={values.name}
+            onChange={handleChange}
+            aria-required="true"
+            aria-invalid={Boolean(errors.name)}
+            aria-describedby={errors.name ? "project-name-error" : undefined}
+            required
+          />
+          {errors.name ? (
+            <p id="project-name-error" className="contact-form__error">
+              {errors.name}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="contact-form__field">
+          <label htmlFor="project-email">
+            Email
+            <span className="contact-form__required-indicator" aria-hidden="true">
+              {" "}*
+            </span>
+            <span className="sr-only"> required</span>
+          </label>
+          <input
+            id="project-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={values.email}
+            onChange={handleChange}
+            aria-required="true"
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? "project-email-error" : undefined}
+            required
+          />
+          {errors.email ? (
+            <p id="project-email-error" className="contact-form__error">
+              {errors.email}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="contact-form__row contact-form__row--two-up">
+        <div className="contact-form__field">
+          <label htmlFor="project-business">
+            Business or organisation
+            <span className="sr-only"> optional</span>
+          </label>
+          <input
+            id="project-business"
+            name="business"
+            type="text"
+            autoComplete="organization"
+            value={values.business}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="contact-form__field">
+          <label htmlFor="project-existing-website">
+            Existing website
+            <span className="sr-only"> optional</span>
+          </label>
+          <input
+            id="project-existing-website"
+            name="website"
+            type="url"
+            autoComplete="url"
+            inputMode="url"
+            value={values.website}
+            onChange={handleChange}
+            aria-invalid={Boolean(errors.website)}
+            aria-describedby={errors.website ? "project-existing-website-error" : undefined}
+          />
+          {errors.website ? (
+            <p id="project-existing-website-error" className="contact-form__error">
+              {errors.website}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="contact-form__row contact-form__row--two-up">
+        <div className="contact-form__field">
+          <label htmlFor="project-type">
+            Project type
+            <span className="contact-form__required-indicator" aria-hidden="true">
+              {" "}*
+            </span>
+            <span className="sr-only"> required</span>
+          </label>
+          <select
+            id="project-type"
+            name="projectType"
+            value={values.projectType}
+            onChange={handleChange}
+            className={!values.projectType ? "contact-form__select--placeholder" : undefined}
+            aria-required="true"
+            aria-invalid={Boolean(errors.projectType)}
+            aria-describedby={errors.projectType ? "project-type-error" : undefined}
+            required
+          >
+            {projectTypeOptions.map((option) => (
+              <option
+                key={option.value || "project-type-placeholder"}
+                value={option.value}
+                disabled={option.value === ""}
+              >
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.projectType ? (
+            <p id="project-type-error" className="contact-form__error">
+              {errors.projectType}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="contact-form__field">
+          <label htmlFor="project-timeline">
+            Desired timeline
+            <span className="contact-form__required-indicator" aria-hidden="true">
+              {" "}*
+            </span>
+            <span className="sr-only"> required</span>
+          </label>
+          <select
+            id="project-timeline"
+            name="timeline"
+            value={values.timeline}
+            onChange={handleChange}
+            className={!values.timeline ? "contact-form__select--placeholder" : undefined}
+            aria-required="true"
+            aria-invalid={Boolean(errors.timeline)}
+            aria-describedby={errors.timeline ? "project-timeline-error" : undefined}
+            required
+          >
+            {timelineOptions.map((option) => (
+              <option
+                key={option.value || "timeline-placeholder"}
+                value={option.value}
+                disabled={option.value === ""}
+              >
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.timeline ? (
+            <p id="project-timeline-error" className="contact-form__error">
+              {errors.timeline}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="contact-form__field">
+        <label htmlFor="project-details">
+          Tell me about the project
+          <span className="contact-form__required-indicator" aria-hidden="true">
+            {" "}*
+          </span>
+          <span className="sr-only"> required</span>
+        </label>
+        <p className="contact-form__field-support contact-form__field-support--project">
+          What does your business do, what kind of website do you need and what
+          would you like it to achieve?
+        </p>
+        <textarea
+          id="project-details"
+          name="details"
+          className="contact-form__textarea--project"
+          autoComplete="off"
+          value={values.details}
+          onChange={handleChange}
+          aria-required="true"
+          aria-invalid={Boolean(errors.details)}
+          aria-describedby={errors.details ? "project-details-error" : undefined}
+          required
+        />
+        {errors.details ? (
+          <p id="project-details-error" className="contact-form__error">
+            {errors.details}
+          </p>
+        ) : null}
+      </div>
+
+      {submitState === "error" ? (
+        <p
+          ref={errorMessageRef}
+          className="contact-form__submit-error"
+          aria-live="assertive"
+          tabIndex="-1"
+        >
+          {submitError || "Unable to send your enquiry right now. Please try again shortly."}
+        </p>
+      ) : null}
+
+      <div className="contact-form__actions">
+        <button
+          className="cta-pill contact-form__submit"
+          type="submit"
+          disabled={submitState === "submitting"}
+        >
+          <span>{submitState === "submitting" ? "Sending..." : "Send project enquiry"}</span>
+        </button>
+        <p className="contact-form__privacy">
+          Your information will only be used to review and respond to your enquiry.
         </p>
       </div>
     </form>
@@ -1140,7 +1587,7 @@ function ContactPage() {
                 <p className="contact-details__label">Ready to discuss a website?</p>
                 <p>
                   For a more detailed project enquiry, use the{" "}
-                  <a className="inline-link" href="/#contact">
+                  <a className="inline-link" href={START_PROJECT_PATH}>
                     Start a Project
                   </a>{" "}
                   form.
@@ -1160,19 +1607,69 @@ function ContactPage() {
   );
 }
 
+function ProjectPage() {
+  return (
+    <>
+      <section className="contact-page">
+        <section className="contact-layout" aria-labelledby="project-heading">
+          <div className="contact-layout__info">
+            <h1 id="project-heading">Start a project</h1>
+            <p className="contact-layout__intro">
+              Tell me a little about your business, what you need and what you
+              would like the website to achieve. I&apos;ll review the details and
+              get back to you with the next steps.
+            </p>
+
+            <div className="contact-details">
+              <div className="contact-details__item">
+                <p className="contact-details__label">What happens next?</p>
+                <p>
+                  I&apos;ll review your enquiry and reply within 1-2 business days.
+                  From there, we can arrange a conversation and discuss the
+                  scope in more detail.
+                </p>
+              </div>
+
+              <div className="contact-details__item">
+                <p className="contact-details__label">Not ready to start?</p>
+                <p>
+                  For general questions or smaller enquiries, use the{" "}
+                  <a className="inline-link" href="/contact/">
+                    Contact page
+                  </a>
+                  .
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="contact-layout__form">
+            <ProjectEnquiryForm />
+          </div>
+        </section>
+      </section>
+
+      <SignatureFooter />
+    </>
+  );
+}
+
 function App() {
   const normalizedPath =
     window.location.pathname.replace(/\/+$/, "") || "/";
   const isPricingPage = normalizedPath === "/pricing";
   const isFaqPage = normalizedPath === "/faq";
   const isContactPage = normalizedPath === "/contact";
+  const isProjectPage = normalizedPath === "/start-a-project";
 
   return (
     <div className="site-shell">
       <SiteNav />
       <main
         className={`page-content ${
-          isPricingPage || isFaqPage || isContactPage ? "page-content--pricing" : ""
+          isPricingPage || isFaqPage || isContactPage || isProjectPage
+            ? "page-content--pricing"
+            : ""
         }`.trim()}
       >
         {isPricingPage ? (
@@ -1181,6 +1678,8 @@ function App() {
           <FaqPage />
         ) : isContactPage ? (
           <ContactPage />
+        ) : isProjectPage ? (
+          <ProjectPage />
         ) : (
           <HomePage />
         )}

@@ -10,6 +10,7 @@ export default defineConfig({
         pricing: "pricing/index.html",
         faq: "faq/index.html",
         contact: "contact/index.html",
+        startProject: "start-a-project/index.html",
       },
     },
   },
