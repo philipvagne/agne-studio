@@ -1,4 +1,5 @@
 import React from "react";
+import { Analytics } from "@vercel/analytics/react";
 import heroComposition from "../assets/hero/hero-composition.png";
 import placeholderOne from "../assets/work/placeholder-1.png";
 import placeholderTwo from "../assets/work/placeholder-2.png";
@@ -1684,6 +1685,7 @@ function App() {
           <HomePage />
         )}
       </main>
+      <Analytics />
     </div>
   );
 }
