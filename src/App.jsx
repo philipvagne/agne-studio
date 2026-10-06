@@ -1,7 +1,7 @@
 import React from "react";
 import heroComposition from "../assets/hero/hero-composition.png";
 import content from "./content/index.js";
-import { launchOfferActive } from "./config.js";
+import { contactEmail, launchOfferActive } from "./config.js";
 import { LANGUAGES, pathFor, resolveRoute } from "./routes.js";
 
 const SITE_NAME = "Agné Studio";
@@ -410,6 +410,22 @@ function ContactForm() {
         <p className="contact-form__privacy">{t.contact.form.privacy}</p>
       </div>
     </form>
+  );
+}
+
+function EmailLine() {
+  const { t } = useLanguage();
+  const href = `mailto:${contactEmail}?subject=${encodeURIComponent(t.form.emailSubject)}`;
+  const [before, after] = t.form.emailLine.split("{email}");
+
+  return (
+    <p className="contact-form__privacy contact-form__email-line">
+      {before}
+      <a className="inline-link" href={href}>
+        {contactEmail}
+      </a>
+      {after}
+    </p>
   );
 }
 
@@ -1343,6 +1359,7 @@ function ContactPage() {
 
           <div className="contact-layout__form">
             <ContactForm />
+            <EmailLine />
           </div>
         </section>
       </section>
@@ -1381,6 +1398,7 @@ function ProjectPage() {
 
           <div className="contact-layout__form">
             <ProjectEnquiryForm />
+            <EmailLine />
           </div>
         </section>
       </section>

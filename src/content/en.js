@@ -64,6 +64,9 @@ const en = {
     honeypotLabel: "Company",
     nameLabel: "Name",
     emailLabel: "Email",
+    // {email} becomes a mailto: link to contactEmail (src/config.js).
+    emailLine: "Prefer email? Write to {email}.",
+    emailSubject: "Enquiry from the website",
     errors: {
       name: "Please enter your name.",
       email: "Please enter your email address.",

@@ -63,6 +63,9 @@ const sv = {
     honeypotLabel: "Företag",
     nameLabel: "Namn",
     emailLabel: "E-post",
+    // {email} blir en mailto:-länk till contactEmail (src/config.js).
+    emailLine: "Föredrar du e-post? Skriv till {email}.",
+    emailSubject: "Förfrågan via hemsidan",
     errors: {
       name: "Ange ditt namn.",
       email: "Ange din e-postadress.",

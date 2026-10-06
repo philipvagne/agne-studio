@@ -9,6 +9,7 @@ import { PAGES } from "../src/routes.js";
 const LINK_PATTERN = /\(page:([a-z-]+)\)/g;
 const TOKEN_PATTERN = /\{(\w+)\}/g;
 const KNOWN_TOKENS = new Set([
+  "email",
   "amount",
   "landingAmount",
   "businessAmount",
@@ -77,6 +78,9 @@ for (const [key, enValue] of enKeys) {
 for (const [name, content] of [["sv.js", sv], ["en.js", en]]) {
   if (!["home", "gallery"].includes(content.nav.startTarget)) {
     problems.push(`${name}: nav.startTarget must be "home" or "gallery"`);
+  }
+  if (content.form.emailLine.split("{email}").length !== 2) {
+    problems.push(`${name}: form.emailLine must contain {email} exactly once`);
   }
 }
 

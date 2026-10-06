@@ -844,6 +844,10 @@ button:focus-visible {
   line-height: 1.55;
 }
 
+.contact-layout__form .contact-form__email-line {
+  margin-top: 1.4rem;
+}
+
 .contact-success {
   display: grid;
   gap: 0.95rem;

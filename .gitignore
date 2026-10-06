@@ -4,6 +4,11 @@ dist/
 
 .env
 .env.local
+.dev.vars
+.dev.vars.*
+
+# Wrangler local state and dry-run output
+.wrangler/
 
 .DS_Store
 .vercel
