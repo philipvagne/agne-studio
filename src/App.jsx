@@ -1,7 +1,7 @@
 import React from "react";
 import heroComposition from "../assets/hero/hero-composition.png";
 import content from "./content/index.js";
-import { contactEmail, launchOfferActive } from "./config.js";
+import { contactEmail, formEndpoint, launchOfferActive } from "./config.js";
 import { LANGUAGES, pathFor, resolveRoute } from "./routes.js";
 
 const SITE_NAME = "Agné Studio";
@@ -33,6 +33,50 @@ const timelineValues = [
 ];
 
 const pricingModalKeys = ["landing-page", "business-website", null];
+
+// Form submissions go to FormSubmit, which emails them to the site owner. The
+// email is in English whatever language the visitor used, so these labels are
+// English constants rather than translated content.
+const NOT_PROVIDED = "Not provided";
+const SITE_LANGUAGE_NAMES = { sv: "Swedish", en: "English" };
+
+const PROJECT_TYPE_NAMES = {
+  "landing-page": "Landing page",
+  "business-website": "Business website",
+  "website-redesign": "Website redesign",
+  "something-else": "Something else",
+};
+
+const TIMELINE_NAMES = {
+  "as-soon-as-possible": "As soon as possible",
+  "within-2-4-weeks": "Within 2-4 weeks",
+  "within-1-2-months": "Within 1-2 months",
+  "within-3-4-months": "Within 3-4 months",
+  "flexible-not-sure-yet": "Flexible / not sure yet",
+};
+
+function singleLine(value) {
+  return value.replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+// FormSubmit does not document its AJAX response body, so only an explicit
+// success counts: an HTTP 2xx whose JSON has success true (or "true").
+// _honey is FormSubmit's honeypot: a non-empty value is silently ignored.
+async function sendToFormSubmit(fields) {
+  const response = await fetch(formEndpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ _template: "table", _captcha: "false", ...fields }),
+  });
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || String(result?.success) !== "true") {
+    throw new Error("Form submission failed");
+  }
+}
 
 const LanguageContext = React.createContext(null);
 
@@ -182,12 +226,12 @@ function SignatureFooter() {
 }
 
 function ContactForm() {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const defaultValues = {
     name: "",
     email: "",
     message: "",
-    company: "",
+    _honey: "",
   };
   const [values, setValues] = React.useState(defaultValues);
   const [errors, setErrors] = React.useState({});
@@ -264,20 +308,15 @@ function ContactForm() {
     setSubmitState("submitting");
 
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          formType: "contact",
-          ...values,
-        }),
+      await sendToFormSubmit({
+        _subject: `Agné Studio contact form: ${singleLine(values.name)}`,
+        _replyto: values.email.trim(),
+        name: values.name.trim(),
+        email: values.email.trim(),
+        message: values.message.trim(),
+        site_language: SITE_LANGUAGE_NAMES[lang],
+        _honey: values._honey,
       });
-
-      if (!response.ok) {
-        throw new Error("Request failed");
-      }
 
       setSubmitState("success");
       setValues(defaultValues);
@@ -318,11 +357,11 @@ function ContactForm() {
         <label htmlFor="contact-company">{t.form.honeypotLabel}</label>
         <input
           id="contact-company"
-          name="company"
+          name="_honey"
           type="text"
           autoComplete="off"
           tabIndex="-1"
-          value={values.company}
+          value={values._honey}
           onChange={handleChange}
         />
       </div>
@@ -443,7 +482,7 @@ function RequiredMark() {
 }
 
 function ProjectEnquiryForm() {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const form = t.project.form;
   const defaultValues = {
     name: "",
@@ -453,7 +492,7 @@ function ProjectEnquiryForm() {
     projectType: "",
     timeline: "",
     details: "",
-    company: "",
+    _honey: "",
   };
   const [values, setValues] = React.useState(defaultValues);
   const [errors, setErrors] = React.useState({});
@@ -577,20 +616,19 @@ function ProjectEnquiryForm() {
     setSubmitState("submitting");
 
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          formType: "project",
-          ...values,
-        }),
+      await sendToFormSubmit({
+        _subject: `Agné Studio project enquiry: ${singleLine(values.name)}`,
+        _replyto: values.email.trim(),
+        name: values.name.trim(),
+        email: values.email.trim(),
+        business_or_organisation: values.business.trim() || NOT_PROVIDED,
+        existing_website: values.website.trim() || NOT_PROVIDED,
+        project_type: PROJECT_TYPE_NAMES[values.projectType],
+        desired_timeline: TIMELINE_NAMES[values.timeline],
+        project_details: values.details.trim(),
+        site_language: SITE_LANGUAGE_NAMES[lang],
+        _honey: values._honey,
       });
-
-      if (!response.ok) {
-        throw new Error("Request failed");
-      }
 
       setSubmitState("success");
       setValues(defaultValues);
@@ -631,11 +669,11 @@ function ProjectEnquiryForm() {
         <label htmlFor="project-company">{t.form.honeypotLabel}</label>
         <input
           id="project-company"
-          name="company"
+          name="_honey"
           type="text"
           autoComplete="off"
           tabIndex="-1"
-          value={values.company}
+          value={values._honey}
           onChange={handleChange}
         />
       </div>
