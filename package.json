@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "node scripts/generate-pages.js && vite",
+    "build": "node scripts/check-i18n.js && node scripts/generate-pages.js && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

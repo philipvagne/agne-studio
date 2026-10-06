@@ -1,412 +1,165 @@
 import React from "react";
 import heroComposition from "../assets/hero/hero-composition.png";
-import placeholderOne from "../assets/work/placeholder-1.png";
-import placeholderTwo from "../assets/work/placeholder-2.png";
-import placeholderThree from "../assets/work/placeholder-3.png";
+import content from "./content/index.js";
+import { launchOfferActive } from "./config.js";
+import { LANGUAGES, pathFor, resolveRoute } from "./routes.js";
 
-const SITE_NAME = "Agn\u00e9 Studio";
-const COPYRIGHT_TEXT = "\u00a9 2026";
-const CREDIT_TEXT = "Designed and developed by Philip Agn\u00e9.";
-const START_PROJECT_PATH = "/start-a-project/";
+const SITE_NAME = "Agné Studio";
+const COPYRIGHT_TEXT = "© 2026";
 
-const workItems = [
-  {
-    src: placeholderOne,
-    alt: "Temporary website preview 1",
-    name: "Concept Project 01",
-    category: "Website Design",
-  },
-  {
-    src: placeholderTwo,
-    alt: "Temporary website preview 2",
-    name: "Concept Project 02",
-    category: "Website Design",
-  },
-  {
-    src: placeholderThree,
-    alt: "Temporary website preview 3",
-    name: "Concept Project 03",
-    category: "Website Design",
-  },
+// Work card images are looked up by the file name given in the content files.
+const workImages = Object.fromEntries(
+  Object.entries(
+    import.meta.glob("../assets/work/*.{jpg,jpeg,png,webp}", {
+      eager: true,
+      import: "default",
+    }),
+  ).map(([path, url]) => [path.split("/").pop(), url]),
+);
+
+const projectTypeValues = [
+  "landing-page",
+  "business-website",
+  "website-redesign",
+  "something-else",
 ];
 
-const homepageNavItems = [
-  { label: "Work", href: "/#work" },
-  { label: "Pricing", href: "/pricing/" },
-  { label: "FAQ", href: "/faq/" },
-  { label: "Contact", href: "/contact/" },
+const timelineValues = [
+  "as-soon-as-possible",
+  "within-2-4-weeks",
+  "within-1-2-months",
+  "within-3-4-months",
+  "flexible-not-sure-yet",
 ];
 
-const projectTypeOptions = [
-  { value: "", label: "Select a project type" },
-  { value: "landing-page", label: "Landing page" },
-  { value: "business-website", label: "Business website" },
-  { value: "website-redesign", label: "Website redesign" },
-  { value: "something-else", label: "Something else" },
-];
+const pricingModalKeys = ["landing-page", "business-website", null];
 
-const timelineOptions = [
-  { value: "", label: "Select a timeline" },
-  { value: "as-soon-as-possible", label: "As soon as possible" },
-  { value: "within-2-4-weeks", label: "Within 2-4 weeks" },
-  { value: "within-1-2-months", label: "Within 1-2 months" },
-  { value: "within-3-4-months", label: "Within 3-4 months" },
-  { value: "flexible-not-sure-yet", label: "Flexible / not sure yet" },
-];
+const LanguageContext = React.createContext(null);
 
-const audiences = [
-  {
-    title: "New businesses",
-    description: "Building a strong first impression from day one.",
-  },
-  {
-    title: "Growing businesses",
-    description:
-      "A website that keeps up with your growth and reflects where you're headed.",
-  },
-  {
-    title: "Businesses ready for a redesign",
-    description:
-      "When your online presence no longer reflects the quality of what you do.",
-  },
-];
+function useLanguage() {
+  return React.useContext(LanguageContext);
+}
 
-const pricingPrinciples = [
-  {
-    title: "Fixed project price",
-    description: "You'll know the total cost before any work begins.",
-  },
-  {
-    title: "Based on scope",
-    description:
-      "The final quote is shaped by the size of the website, its content, functionality, and the complexity of the project.",
-  },
-  {
-    title: "No surprises",
-    description:
-      "If the scope changes during the project, we'll discuss it before any additional work begins.",
-  },
-];
+function fillTokens(text, tokens) {
+  return text.replace(/\{(\w+)\}/g, (match, key) => tokens[key] ?? match);
+}
 
-const pricingExamples = [
-  { name: "Landing page", price: "From $350", modalKey: "landing-page" },
-  { name: "Business website", price: "From $700", modalKey: "business-website" },
-  { name: "Larger custom website", price: "Custom quote" },
-];
+// Prices in running text come from pricing.examples, so they are written once.
+// The first two examples are the landing page and the business website.
+function buildPriceTokens(t) {
+  const [landing, business] = t.pricing.examples;
+  const tokens = {
+    landingAmount: landing.amount,
+    businessAmount: business.amount,
+    landingLaunch: landing.launchAmount,
+    businessLaunch: business.launchAmount,
+  };
 
-const pricingDetailModals = {
-  "landing-page": {
-    title: "Landing page",
-    introduction:
-      "A focused, single-page website designed to present a business, service or offer and guide visitors towards one clear action.",
-    primaryHeading: "Included by default",
-    primaryItems: [
-      "One responsive marketing page",
-      "Custom visual design",
-      "Approximately 5-7 content sections",
-      "One primary conversion goal",
-      "Basic contact form or external call to action",
-      "Mobile and tablet optimisation",
-      "Basic SEO foundations",
-      "Performance optimisation",
-      "Domain connection and launch assistance",
-      "Two structured design revision rounds",
-      "One final refinement round before launch",
-    ],
-    secondaryHeading: "Available as additions",
-    secondaryItems: [
-      "Additional pages",
-      "Advanced animations",
-      "Booking functionality",
-      "Blog or CMS functionality",
-      "E-commerce",
-      "Third-party integrations",
-      "Copywriting",
-      "Branding",
-      "Hosting and ongoing maintenance",
-    ],
-    note:
-      "Additional functionality is quoted separately based on the needs of the project.",
-  },
-  "business-website": {
-    title: "Business website",
-    introduction:
-      "A custom multi-page website for businesses that need a broader online presence with clearly separated information, services and contact pathways.",
-    primaryHeading: "Included by default",
-    primaryItems: [
-      "Up to five core pages",
-      "Custom visual design",
-      "Responsive development",
-      "Navigation and footer",
-      "Basic contact form",
-      "Mobile and tablet optimisation",
-      "Basic SEO foundations",
-      "Performance optimisation",
-      "Domain connection and launch assistance",
-      "Two structured design revision rounds",
-      "One final refinement round before launch",
-    ],
-    secondaryHeading: "Available as additions",
-    secondaryItems: [
-      "Additional pages",
-      "Advanced animations",
-      "Booking functionality",
-      "Blog or CMS functionality",
-      "E-commerce",
-      "Third-party integrations",
-      "Copywriting",
-      "Branding",
-      "Hosting and ongoing maintenance",
-    ],
-    note:
-      "Additional functionality is quoted separately based on the needs of the project.",
-  },
-  "optional-add-ons": {
-    title: "Optional add-ons",
-    introduction:
-      "Every project can be adapted with additional functionality when the standard scope is not enough.",
-    primaryHeading: "Add-ons",
-    primaryItems: [
-      "Additional pages",
-      "Advanced animations and interactions",
-      "Blog or CMS functionality",
-      "Booking systems",
-      "E-commerce",
-      "Custom forms",
-      "Third-party integrations",
-      "Multilingual support",
-      "Copywriting support",
-      "Branding support",
-      "Hosting",
-      "Ongoing maintenance",
-    ],
-    note:
-      "Add-ons are quoted separately according to the complexity and requirements of the project.",
-  },
-};
+  tokens.launchSentence = launchOfferActive
+    ? ` ${fillTokens(t.faq.costLaunchSentence, tokens)}`
+    : "";
 
-const projectPolicies = [
-  {
-    title: "Deposit",
-    summary: "30% to begin",
-    description:
-      "A 30% deposit secures the project and allows work to begin. The remaining 70% is due before the completed website is launched or handed over.",
-  },
-  {
-    title: "Revisions",
-    summary: "Clear revision boundaries",
-    description:
-      "Each standard project includes two structured design revision rounds and one final refinement round before launch. Additional revisions or changes outside the agreed scope can be discussed and quoted separately.",
-  },
-];
+  return tokens;
+}
 
-const includedItems = [
-  {
-    title: "Discovery and planning",
-    description:
-      "Understanding your business, goals, audience, and what the website needs to achieve.",
-  },
-  {
-    title: "Custom design",
-    description:
-      "A considered visual direction created specifically for your business rather than relying on a generic template.",
-  },
-  {
-    title: "Responsive development",
-    description:
-      "A website built to work across desktop, tablet, and mobile devices.",
-  },
-  {
-    title: "Performance and accessibility",
-    description:
-      "Attention to loading performance, usability, semantic structure, and accessibility best practices.",
-  },
-  {
-    title: "Basic SEO foundations",
-    description:
-      "A clean page structure, metadata, and semantic HTML that help search engines understand the website.",
-  },
-  {
-    title: "Launch assistance",
-    description:
-      "Help publishing the completed website through the client's chosen hosting provider and connecting an existing domain when applicable.",
-  },
-  {
-    title: "Documentation and handover",
-    description:
-      "Clear guidance on how the finished website works and how agreed content can be managed after launch.",
-  },
-];
+const LINK_PATTERN = /\[([^\]]+)\]\(page:([a-z-]+)\)/g;
 
-const processSteps = [
-  {
-    title: "Discovery",
-    description:
-      "Understanding the business, goals, content, and project requirements.",
-  },
-  {
-    title: "Design",
-    description:
-      "Establishing the visual direction, layout, and user experience.",
-  },
-  {
-    title: "Development",
-    description:
-      "Building the approved design into a responsive website.",
-  },
-  {
-    title: "Review",
-    description:
-      "Testing, refining, and preparing the website for release.",
-  },
-  {
-    title: "Launch",
-    description:
-      "Publishing the completed website and completing the agreed handover.",
-  },
-];
+function RichText({ text: rawText, linkClassName }) {
+  const { lang, t } = useLanguage();
+  const text = fillTokens(rawText, buildPriceTokens(t));
+  const parts = [];
+  let lastIndex = 0;
 
-const pricingFaqs = [
-  {
-    question: "Are the prices on this page fixed?",
-    answer:
-      "No. The examples provide a starting point. Every project receives a tailored quote based on its scope and requirements.",
-  },
-  {
-    question: "What is the payment schedule?",
-    answer:
-      "A 30% deposit is required to begin. The remaining balance is due before the completed website is launched or handed over.",
-  },
-  {
-    question: "What happens if the scope changes?",
-    answer:
-      "Any requested work outside the agreed scope will be discussed and approved before additional work begins or additional costs are added.",
-  },
-  {
-    question: "Can I request maintenance or ongoing support?",
-    answer:
-      "Yes. Ongoing support, maintenance, and future updates can be discussed separately and are not included automatically in the fixed project price.",
-  },
-  {
-    question: "Can you work with my existing domain and hosting?",
-    answer:
-      "Yes, when technically suitable. I can help publish the website through your chosen hosting provider and connect an existing domain. Hosting fees, domain purchases, and third-party subscriptions remain the client's responsibility.",
-  },
-];
+  for (const match of text.matchAll(LINK_PATTERN)) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <a key={match.index} className={linkClassName} href={pathFor(match[2], lang)}>
+        {match[1]}
+      </a>,
+    );
+    lastIndex = match.index + match[0].length;
+  }
 
-const faqPageItems = [
-  {
-    question: "What types of websites do you build?",
-    answer:
-      "I build focused landing pages, multi-page business websites and larger custom websites. Each project is tailored to the goals, content and requirements of the business rather than built from a fixed template.",
-  },
-  {
-    question: "How much does a website cost?",
-    answer: (
-      <>
-        Landing pages currently start from $350 and business websites start
-        from $700. Larger or more complex websites receive a custom quote
-        based on their scope and requirements. You can find the current
-        starting prices on the <a href="/pricing/">Pricing page</a>.
-      </>
-    ),
-  },
-  {
-    question: "How long does a project take?",
-    answer:
-      "Project timelines vary depending on the scope, required functionality and how quickly content and feedback are provided. Before we begin, we'll agree on a realistic timeline so you always know what to expect throughout the project.",
-  },
-  {
-    question: "What is included in a standard project?",
-    answer: (
-      <>
-        Standard projects include custom design, responsive development, basic
-        search-engine setup, a contact form where required, testing and
-        support during launch. The exact inclusions depend on the selected
-        service and agreed scope. More detail is available on the{" "}
-        <a href="/pricing/">Pricing page</a>.
-      </>
-    ),
-  },
-  {
-    question: "How many revisions are included?",
-    answer:
-      "Standard projects include two structured design revision rounds and one final refinement round. Additional revisions or work outside the agreed scope can be quoted separately.",
-  },
-  {
-    question: "Do I need to provide the text and images?",
-    answer:
-      "Clients normally provide their final text, images, brand assets and any required legal information. Copywriting, branding assistance and other content-related services can be discussed as optional additions.",
-  },
-  {
-    question: "Can you redesign an existing website?",
-    answer:
-      "Yes. Existing websites can be redesigned when the project is a good fit. The current site, content, technical setup and goals will be reviewed before confirming the scope.",
-  },
-  {
-    question: "Do you provide hosting and maintenance?",
-    answer:
-      "Hosting and ongoing maintenance can be included as optional services. The exact arrangement depends on the website and the level of ongoing support required.",
-  },
-  {
-    question: "What happens after the website launches?",
-    answer:
-      "I help make sure the website is launched correctly and that the agreed pages and functionality are working as expected. Ongoing hosting, maintenance and future improvements can be discussed separately.",
-  },
-  {
-    question: "How do we get started?",
-    answer: (
-      <>
-        You can begin by completing the{" "}
-        <a href={START_PROJECT_PATH}>Start a Project form</a>{" "}
-        with a short description of your business, goals and website needs. I
-        will review the information and get back to you about the next step.
-      </>
-    ),
-  },
-];
+  parts.push(text.slice(lastIndex));
+  return <>{parts}</>;
+}
 
-function SiteNav() {
+function SiteNav({ page }) {
+  const { lang, t } = useLanguage();
+  const homePath = pathFor("home", lang);
+  const startsAtGallery = t.nav.startTarget === "gallery";
+  const navItems = [
+    {
+      label: t.nav.start,
+      href: startsAtGallery ? `${homePath}#work` : homePath,
+      current: !startsAtGallery && page === "home",
+    },
+    { label: t.nav.pricing, href: pathFor("pricing", lang) },
+    { label: t.nav.faq, href: pathFor("faq", lang) },
+    { label: t.nav.contact, href: pathFor("contact", lang) },
+  ];
+
   return (
     <header className="site-header">
-      <nav className="site-nav" aria-label="Primary">
-        <a className="site-brand" href="/">
+      <nav className="site-nav" aria-label={t.nav.ariaLabel}>
+        <a className="site-brand" href={pathFor("home", lang)}>
           {SITE_NAME}
         </a>
         <div className="site-nav__actions">
           <ul className="site-nav__list">
-            {homepageNavItems.map((item) => (
-              <li key={item.label}>
-                <a className="site-nav__link" href={item.href}>
+            {navItems.map((item) => (
+              <li key={item.href}>
+                <a
+                  className="site-nav__link"
+                  href={item.href}
+                  aria-current={item.current ? "page" : undefined}
+                >
                   {item.label}
                 </a>
               </li>
             ))}
           </ul>
-          <a className="cta-pill cta-pill--nav" href={START_PROJECT_PATH}>
-            <span>Start a project</span>
+          <a className="cta-pill cta-pill--nav" href={pathFor("project", lang)}>
+            <span>{t.nav.startProject}</span>
             <span aria-hidden="true">&rarr;</span>
           </a>
+          <div className="language-toggle" role="group" aria-label={t.nav.languageLabel}>
+            {Object.entries(LANGUAGES).map(([code, language]) => (
+              <a
+                key={code}
+                className="language-toggle__link"
+                href={pathFor(page, code)}
+                lang={code}
+                hrefLang={code}
+                aria-label={language.name}
+                aria-current={code === lang ? "true" : undefined}
+              >
+                {language.short}
+              </a>
+            ))}
+          </div>
         </div>
       </nav>
     </header>
   );
 }
 
-function FinalCta({
-  title = "Let's build a website that reflects your business.",
-  copy = "Tell me what you need, where your current website falls short, or simply what you're considering. We can take it from there.",
-  buttonLabel = "Start a project",
-  buttonHref = START_PROJECT_PATH,
-}) {
+function FinalCta({ title, copy, buttonLabel, buttonHref }) {
+  const { lang, t } = useLanguage();
+
   return (
     <section className="final-cta" aria-labelledby="final-cta-title">
       <h2 id="final-cta-title" className="final-cta__title">
-        {title}
+        {title ?? t.finalCta.title}
       </h2>
-      <p className="final-cta__copy">{copy}</p>
-      <a className="cta-pill cta-pill--final" href={buttonHref}>
-        <span>{buttonLabel}</span>
+      <p className="final-cta__copy">{copy ?? t.finalCta.copy}</p>
+      <a
+        className="cta-pill cta-pill--final"
+        href={buttonHref ?? pathFor("project", lang)}
+      >
+        <span>{buttonLabel ?? t.finalCta.button}</span>
         <span aria-hidden="true">&rarr;</span>
       </a>
     </section>
@@ -414,12 +167,14 @@ function FinalCta({
 }
 
 function SignatureFooter() {
+  const { t } = useLanguage();
+
   return (
-    <footer className="signature-footer" aria-label="Site signature">
+    <footer className="signature-footer" aria-label={t.footer.ariaLabel}>
       <div className="signature-footer__divider" aria-hidden="true" />
       <div className="signature-footer__content">
         <p className="signature-footer__brand">{SITE_NAME}</p>
-        <p className="signature-footer__credit">{CREDIT_TEXT}</p>
+        <p className="signature-footer__credit">{t.footer.credit}</p>
         <p className="signature-footer__copyright">{COPYRIGHT_TEXT}</p>
       </div>
     </footer>
@@ -427,6 +182,7 @@ function SignatureFooter() {
 }
 
 function ContactForm() {
+  const { t } = useLanguage();
   const defaultValues = {
     name: "",
     email: "",
@@ -436,29 +192,31 @@ function ContactForm() {
   const [values, setValues] = React.useState(defaultValues);
   const [errors, setErrors] = React.useState({});
   const [submitState, setSubmitState] = React.useState("idle");
-  const [submitError, setSubmitError] = React.useState("");
   const successHeadingRef = React.useRef(null);
   const errorMessageRef = React.useRef(null);
 
-  const validate = React.useCallback((nextValues) => {
-    const nextErrors = {};
+  const validate = React.useCallback(
+    (nextValues) => {
+      const nextErrors = {};
 
-    if (!nextValues.name.trim()) {
-      nextErrors.name = "Please enter your name.";
-    }
+      if (!nextValues.name.trim()) {
+        nextErrors.name = t.form.errors.name;
+      }
 
-    if (!nextValues.email.trim()) {
-      nextErrors.email = "Please enter your email address.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextValues.email)) {
-      nextErrors.email = "Please enter a valid email address.";
-    }
+      if (!nextValues.email.trim()) {
+        nextErrors.email = t.form.errors.email;
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextValues.email)) {
+        nextErrors.email = t.form.errors.emailInvalid;
+      }
 
-    if (!nextValues.message.trim()) {
-      nextErrors.message = "Please enter a short message.";
-    }
+      if (!nextValues.message.trim()) {
+        nextErrors.message = t.contact.form.errors.message;
+      }
 
-    return nextErrors;
-  }, []);
+      return nextErrors;
+    },
+    [t],
+  );
 
   React.useEffect(() => {
     if (submitState === "success") {
@@ -497,7 +255,6 @@ function ContactForm() {
 
     const nextErrors = validate(values);
     setErrors(nextErrors);
-    setSubmitError("");
 
     if (Object.keys(nextErrors).length > 0) {
       setSubmitState("idle");
@@ -518,44 +275,38 @@ function ContactForm() {
         }),
       });
 
-      const payload = await response.json().catch(() => ({}));
-
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to send message.");
+        throw new Error("Request failed");
       }
 
       setSubmitState("success");
       setValues(defaultValues);
       setErrors({});
-    } catch (error) {
+    } catch {
       setSubmitState("error");
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong while sending your message. Please try again.",
-      );
     }
   };
 
   if (submitState === "success") {
+    const { success } = t.contact.form;
+
     return (
       <div className="contact-success" aria-live="polite">
         <h2 ref={successHeadingRef} className="contact-success__title" tabIndex="-1">
-          Message sent
+          {success.title}
         </h2>
-        <p>Thanks for getting in touch.</p>
-        <p>I&apos;ve received your message and will get back to you as soon as I can.</p>
+        <p>{success.thanks}</p>
+        <p>{success.received}</p>
         <button
           className="contact-success__reset"
           type="button"
           onClick={() => {
             setValues(defaultValues);
             setErrors({});
-            setSubmitError("");
             setSubmitState("idle");
           }}
         >
-          Send another message
+          {success.reset}
         </button>
       </div>
     );
@@ -564,7 +315,7 @@ function ContactForm() {
   return (
     <form className="contact-form" noValidate onSubmit={handleSubmit}>
       <div className="contact-form__field contact-form__field--honeypot" aria-hidden="true">
-        <label htmlFor="contact-company">Company</label>
+        <label htmlFor="contact-company">{t.form.honeypotLabel}</label>
         <input
           id="contact-company"
           name="company"
@@ -577,7 +328,7 @@ function ContactForm() {
       </div>
 
       <div className="contact-form__field">
-        <label htmlFor="contact-name">Name</label>
+        <label htmlFor="contact-name">{t.form.nameLabel}</label>
         <input
           id="contact-name"
           name="name"
@@ -597,7 +348,7 @@ function ContactForm() {
       </div>
 
       <div className="contact-form__field">
-        <label htmlFor="contact-email">Email</label>
+        <label htmlFor="contact-email">{t.form.emailLabel}</label>
         <input
           id="contact-email"
           name="email"
@@ -617,7 +368,7 @@ function ContactForm() {
       </div>
 
       <div className="contact-form__field">
-        <label htmlFor="contact-message">Message</label>
+        <label htmlFor="contact-message">{t.contact.form.messageLabel}</label>
         <textarea
           id="contact-message"
           name="message"
@@ -642,7 +393,7 @@ function ContactForm() {
           aria-live="assertive"
           tabIndex="-1"
         >
-          {submitError || "Something went wrong while sending your message. Please try again."}
+          {t.contact.form.errors.submit}
         </p>
       ) : null}
 
@@ -652,17 +403,32 @@ function ContactForm() {
           type="submit"
           disabled={submitState === "submitting"}
         >
-          <span>{submitState === "submitting" ? "Sending..." : "Send message"}</span>
+          <span>
+            {submitState === "submitting" ? t.form.sending : t.contact.form.submit}
+          </span>
         </button>
-        <p className="contact-form__privacy">
-          Your information will only be used to respond to your enquiry.
-        </p>
+        <p className="contact-form__privacy">{t.contact.form.privacy}</p>
       </div>
     </form>
   );
 }
 
+function RequiredMark() {
+  const { t } = useLanguage();
+
+  return (
+    <>
+      <span className="contact-form__required-indicator" aria-hidden="true">
+        {" "}*
+      </span>
+      <span className="sr-only"> {t.form.required}</span>
+    </>
+  );
+}
+
 function ProjectEnquiryForm() {
+  const { t } = useLanguage();
+  const form = t.project.form;
   const defaultValues = {
     name: "",
     email: "",
@@ -676,9 +442,24 @@ function ProjectEnquiryForm() {
   const [values, setValues] = React.useState(defaultValues);
   const [errors, setErrors] = React.useState({});
   const [submitState, setSubmitState] = React.useState("idle");
-  const [submitError, setSubmitError] = React.useState("");
   const successHeadingRef = React.useRef(null);
   const errorMessageRef = React.useRef(null);
+
+  const projectTypeOptions = [
+    { value: "", label: form.projectTypes.placeholder },
+    ...projectTypeValues.map((value) => ({
+      value,
+      label: form.projectTypes.options[value],
+    })),
+  ];
+
+  const timelineOptions = [
+    { value: "", label: form.timelines.placeholder },
+    ...timelineValues.map((value) => ({
+      value,
+      label: form.timelines.options[value],
+    })),
+  ];
 
   const isValidWebsite = React.useCallback((value) => {
     const trimmedValue = value.trim();
@@ -704,34 +485,34 @@ function ProjectEnquiryForm() {
       const nextErrors = {};
 
       if (!nextValues.name.trim()) {
-        nextErrors.name = "Please enter your name.";
+        nextErrors.name = t.form.errors.name;
       }
 
       if (!nextValues.email.trim()) {
-        nextErrors.email = "Please enter your email address.";
+        nextErrors.email = t.form.errors.email;
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextValues.email)) {
-        nextErrors.email = "Please enter a valid email address.";
+        nextErrors.email = t.form.errors.emailInvalid;
       }
 
       if (nextValues.website.trim() && !isValidWebsite(nextValues.website)) {
-        nextErrors.website = "Please enter a valid website address.";
+        nextErrors.website = t.project.form.errors.website;
       }
 
       if (!nextValues.projectType) {
-        nextErrors.projectType = "Please select a project type.";
+        nextErrors.projectType = t.project.form.errors.projectType;
       }
 
       if (!nextValues.timeline) {
-        nextErrors.timeline = "Please select a desired timeline.";
+        nextErrors.timeline = t.project.form.errors.timeline;
       }
 
       if (!nextValues.details.trim()) {
-        nextErrors.details = "Please tell me a little about the project.";
+        nextErrors.details = t.project.form.errors.details;
       }
 
       return nextErrors;
     },
-    [isValidWebsite],
+    [isValidWebsite, t],
   );
 
   React.useEffect(() => {
@@ -771,7 +552,6 @@ function ProjectEnquiryForm() {
 
     const nextErrors = validate(values);
     setErrors(nextErrors);
-    setSubmitError("");
 
     if (Object.keys(nextErrors).length > 0) {
       setSubmitState("idle");
@@ -792,49 +572,38 @@ function ProjectEnquiryForm() {
         }),
       });
 
-      const payload = await response.json().catch(() => ({}));
-
       if (!response.ok) {
-        throw new Error(
-          payload.error || "Unable to send your enquiry right now. Please try again shortly.",
-        );
+        throw new Error("Request failed");
       }
 
       setSubmitState("success");
       setValues(defaultValues);
       setErrors({});
-    } catch (error) {
+    } catch {
       setSubmitState("error");
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "Unable to send your enquiry right now. Please try again shortly.",
-      );
     }
   };
 
   if (submitState === "success") {
+    const { success } = form;
+
     return (
       <div className="contact-success" aria-live="polite">
         <h2 ref={successHeadingRef} className="contact-success__title" tabIndex="-1">
-          Enquiry sent
+          {success.title}
         </h2>
-        <p>Thanks for telling me about your project.</p>
-        <p>
-          I&apos;ve received your enquiry and will review the details before getting
-          back to you within 1-2 business days.
-        </p>
+        <p>{success.thanks}</p>
+        <p>{success.received}</p>
         <button
           className="contact-success__reset"
           type="button"
           onClick={() => {
             setValues(defaultValues);
             setErrors({});
-            setSubmitError("");
             setSubmitState("idle");
           }}
         >
-          Send another enquiry
+          {success.reset}
         </button>
       </div>
     );
@@ -843,7 +612,7 @@ function ProjectEnquiryForm() {
   return (
     <form className="contact-form" noValidate onSubmit={handleSubmit}>
       <div className="contact-form__field contact-form__field--honeypot" aria-hidden="true">
-        <label htmlFor="project-company">Company</label>
+        <label htmlFor="project-company">{t.form.honeypotLabel}</label>
         <input
           id="project-company"
           name="company"
@@ -856,17 +625,14 @@ function ProjectEnquiryForm() {
       </div>
 
       <p className="contact-form__required-note">
-        <span aria-hidden="true">*</span> Required fields
+        <span aria-hidden="true">*</span> {t.form.requiredNote}
       </p>
 
       <div className="contact-form__row contact-form__row--two-up">
         <div className="contact-form__field">
           <label htmlFor="project-name">
-            Name
-            <span className="contact-form__required-indicator" aria-hidden="true">
-              {" "}*
-            </span>
-            <span className="sr-only"> required</span>
+            {t.form.nameLabel}
+            <RequiredMark />
           </label>
           <input
             id="project-name"
@@ -889,11 +655,8 @@ function ProjectEnquiryForm() {
 
         <div className="contact-form__field">
           <label htmlFor="project-email">
-            Email
-            <span className="contact-form__required-indicator" aria-hidden="true">
-              {" "}*
-            </span>
-            <span className="sr-only"> required</span>
+            {t.form.emailLabel}
+            <RequiredMark />
           </label>
           <input
             id="project-email"
@@ -918,8 +681,8 @@ function ProjectEnquiryForm() {
       <div className="contact-form__row contact-form__row--two-up">
         <div className="contact-form__field">
           <label htmlFor="project-business">
-            Business or organisation
-            <span className="sr-only"> optional</span>
+            {form.businessLabel}
+            <span className="sr-only"> {t.form.optional}</span>
           </label>
           <input
             id="project-business"
@@ -933,8 +696,8 @@ function ProjectEnquiryForm() {
 
         <div className="contact-form__field">
           <label htmlFor="project-existing-website">
-            Existing website
-            <span className="sr-only"> optional</span>
+            {form.websiteLabel}
+            <span className="sr-only"> {t.form.optional}</span>
           </label>
           <input
             id="project-existing-website"
@@ -958,11 +721,8 @@ function ProjectEnquiryForm() {
       <div className="contact-form__row contact-form__row--two-up">
         <div className="contact-form__field">
           <label htmlFor="project-type">
-            Project type
-            <span className="contact-form__required-indicator" aria-hidden="true">
-              {" "}*
-            </span>
-            <span className="sr-only"> required</span>
+            {form.projectTypeLabel}
+            <RequiredMark />
           </label>
           <select
             id="project-type"
@@ -994,11 +754,8 @@ function ProjectEnquiryForm() {
 
         <div className="contact-form__field">
           <label htmlFor="project-timeline">
-            Desired timeline
-            <span className="contact-form__required-indicator" aria-hidden="true">
-              {" "}*
-            </span>
-            <span className="sr-only"> required</span>
+            {form.timelineLabel}
+            <RequiredMark />
           </label>
           <select
             id="project-timeline"
@@ -1031,15 +788,11 @@ function ProjectEnquiryForm() {
 
       <div className="contact-form__field">
         <label htmlFor="project-details">
-          Tell me about the project
-          <span className="contact-form__required-indicator" aria-hidden="true">
-            {" "}*
-          </span>
-          <span className="sr-only"> required</span>
+          {form.detailsLabel}
+          <RequiredMark />
         </label>
         <p className="contact-form__field-support contact-form__field-support--project">
-          What does your business do, what kind of website do you need and what
-          would you like it to achieve?
+          {form.detailsSupport}
         </p>
         <textarea
           id="project-details"
@@ -1067,7 +820,7 @@ function ProjectEnquiryForm() {
           aria-live="assertive"
           tabIndex="-1"
         >
-          {submitError || "Unable to send your enquiry right now. Please try again shortly."}
+          {form.errors.submit}
         </p>
       ) : null}
 
@@ -1077,47 +830,55 @@ function ProjectEnquiryForm() {
           type="submit"
           disabled={submitState === "submitting"}
         >
-          <span>{submitState === "submitting" ? "Sending..." : "Send project enquiry"}</span>
+          <span>{submitState === "submitting" ? t.form.sending : form.submit}</span>
         </button>
-        <p className="contact-form__privacy">
-          Your information will only be used to review and respond to your enquiry.
-        </p>
+        <p className="contact-form__privacy">{form.privacy}</p>
       </div>
     </form>
   );
 }
 
 function HomePage() {
+  const { t } = useLanguage();
+  const home = t.home;
+
   return (
     <>
       <section className="hero" aria-labelledby="hero-heading">
         <div className="hero__copy">
-          <h1 id="hero-heading">Thoughtful websites for small businesses.</h1>
-          <p>
-            Your website is often the first impression people have of your
-            business. It should reflect the quality behind it.
-          </p>
+          <h1 id="hero-heading">{home.heroTitle}</h1>
+          <p>{home.heroText}</p>
         </div>
         <div className="hero__visual">
           <img src={heroComposition} alt="" />
         </div>
       </section>
 
-      <section className="work-gallery" id="work" aria-label="Work gallery">
-        {workItems.map((item) => (
-          <figure className="work-gallery__item" key={item.src}>
-            <div className="work-gallery__frame">
-              <img src={item.src} alt={item.alt} />
-            </div>
-            <figcaption className="work-gallery__meta">
-              <div className="work-gallery__meta-row">
-                <span className="work-gallery__name">{item.name}</span>
-                <span className="work-gallery__arrow" aria-hidden="true">
-                  &rarr;
-                </span>
+      <section className="work-gallery" id="work" aria-label={home.workLabel}>
+        {home.workItems.map((item) => (
+          <figure className="work-gallery__item" key={item.url}>
+            <a
+              className="work-gallery__link"
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="work-gallery__frame">
+                <img src={workImages[item.image]} alt={item.alt} />
               </div>
-              <p className="work-gallery__category">{item.category}</p>
-            </figcaption>
+              <figcaption className="work-gallery__meta">
+                <div className="work-gallery__meta-row">
+                  <span className="work-gallery__name">
+                    {item.name}
+                    <span className="sr-only"> {home.workNewTab}</span>
+                  </span>
+                  <span className="work-gallery__arrow" aria-hidden="true">
+                    &rarr;
+                  </span>
+                </div>
+                <p className="work-gallery__category">{item.category}</p>
+              </figcaption>
+            </a>
           </figure>
         ))}
       </section>
@@ -1125,10 +886,10 @@ function HomePage() {
       <section className="editorial-section" aria-labelledby="who-i-work-with-title">
         <div className="editorial-section__column editorial-section__column--left">
           <h2 id="who-i-work-with-title" className="section-label">
-            Who I Work With
+            {home.audiencesTitle}
           </h2>
           <div className="audience-list">
-            {audiences.map((audience) => (
+            {home.audiences.map((audience) => (
               <article className="audience-list__item" key={audience.title}>
                 <h3>{audience.title}</h3>
                 <p>{audience.description}</p>
@@ -1140,26 +901,13 @@ function HomePage() {
         <div className="editorial-section__divider" aria-hidden="true" />
 
         <div className="editorial-section__column editorial-section__column--right">
-          <h2 className="section-label">Why Agné Studio Exists</h2>
+          <h2 className="section-label">{home.whyTitle}</h2>
           <div className="editorial-section__content">
-            <p className="editorial-section__statement">
-              Every business deserves a website that reflects the quality
-              behind it.
-            </p>
+            <p className="editorial-section__statement">{home.whyStatement}</p>
             <div className="editorial-section__body">
-              <p>
-                A website is often the first interaction people have with your
-                business. It should communicate who you are, what you do, and
-                why it matters.
-              </p>
-              <p>
-                Agné Studio believes in clarity, thoughtful design, and
-                websites that are built to be easy to manage and grow with you.
-              </p>
-              <p>
-                The goal is simple: to create an online presence that finally
-                feels like a true reflection of your business.
-              </p>
+              {home.whyBody.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
             </div>
           </div>
         </div>
@@ -1194,7 +942,7 @@ function FaqAccordion({ items, initiallyOpenIndex = 0 }) {
               >
                 <span>{item.question}</span>
                 <span className="pricing-faq__symbol" aria-hidden="true">
-                  {isOpen ? "\u2212" : "+"}
+                  {isOpen ? "−" : "+"}
                 </span>
               </button>
             </h3>
@@ -1205,7 +953,9 @@ function FaqAccordion({ items, initiallyOpenIndex = 0 }) {
               aria-labelledby={buttonId}
               hidden={!isOpen}
             >
-              <div className="pricing-faq__answer">{item.answer}</div>
+              <div className="pricing-faq__answer">
+                <RichText text={item.answer} />
+              </div>
             </div>
           </div>
         );
@@ -1214,11 +964,8 @@ function FaqAccordion({ items, initiallyOpenIndex = 0 }) {
   );
 }
 
-function PricingFaqAccordion() {
-  return <FaqAccordion items={pricingFaqs} initiallyOpenIndex={-1} />;
-}
-
-function PricingDetailModal({ modal, onClose, returnFocusRef }) {
+function PricingDetailModal({ modal, modalKey, onClose, returnFocusRef }) {
+  const { t } = useLanguage();
   const closeButtonRef = React.useRef(null);
   const dialogRef = React.useRef(null);
 
@@ -1274,9 +1021,7 @@ function PricingDetailModal({ modal, onClose, returnFocusRef }) {
     return null;
   }
 
-  const headingId = `pricing-modal-title-${modal.title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")}`;
+  const headingId = `pricing-modal-title-${modalKey}`;
   const descriptionId = `${headingId}-description`;
   const hasSecondarySection = Boolean(
     modal.secondaryHeading && modal.secondaryItems?.length,
@@ -1315,7 +1060,7 @@ function PricingDetailModal({ modal, onClose, returnFocusRef }) {
             type="button"
             onClick={onClose}
           >
-            Close
+            {t.pricing.modalClose}
           </button>
         </div>
 
@@ -1355,9 +1100,11 @@ function PricingDetailModal({ modal, onClose, returnFocusRef }) {
 }
 
 function PricingPage() {
+  const { t } = useLanguage();
+  const pricing = t.pricing;
   const [activeModalKey, setActiveModalKey] = React.useState(null);
   const returnFocusRef = React.useRef(null);
-  const activeModal = activeModalKey ? pricingDetailModals[activeModalKey] : null;
+  const activeModal = activeModalKey ? pricing.modals[activeModalKey] : null;
 
   const openModal = React.useCallback((modalKey, triggerElement) => {
     returnFocusRef.current = triggerElement;
@@ -1373,12 +1120,8 @@ function PricingPage() {
       <section className="pricing-page">
         <section className="pricing-hero" aria-labelledby="pricing-heading">
           <div className="pricing-hero__main">
-            <h1 id="pricing-heading">Pricing</h1>
-            <p>
-              Every project is different, but the process shouldn&apos;t feel
-              uncertain. Here&apos;s how I approach pricing and what you can
-              expect.
-            </p>
+            <h1 id="pricing-heading">{pricing.title}</h1>
+            <p>{pricing.intro}</p>
           </div>
         </section>
 
@@ -1387,10 +1130,10 @@ function PricingPage() {
           aria-labelledby="pricing-principles-title"
         >
           <div className="pricing-section__header">
-            <h2 id="pricing-principles-title">How pricing works</h2>
+            <h2 id="pricing-principles-title">{pricing.principlesTitle}</h2>
           </div>
           <div className="pricing-principles__grid">
-            {pricingPrinciples.map((item) => (
+            {pricing.principles.map((item) => (
               <article className="pricing-principles__item" key={item.title}>
                 <h3>{item.title}</h3>
                 <p>{item.description}</p>
@@ -1404,41 +1147,55 @@ function PricingPage() {
           aria-labelledby="pricing-typical-title"
         >
           <div className="pricing-section__header pricing-section__header--narrow">
-            <h2 id="pricing-typical-title">Services & pricing</h2>
-            <p>
-              Every project receives a tailored quote, but these examples
-              provide a useful starting point.
-            </p>
+            <h2 id="pricing-typical-title">{pricing.servicesTitle}</h2>
+            <p>{pricing.servicesIntro}</p>
           </div>
-          <div className="pricing-list" role="list" aria-label="Typical projects">
-            {pricingExamples.map((item) => (
-              <div className="pricing-list__row" key={item.name} role="listitem">
-                <div className="pricing-list__item">
-                  <span className="pricing-list__label">{item.name}</span>
-                  {item.modalKey ? (
-                    <button
-                      className="pricing-list__action"
-                      type="button"
-                      onClick={(event) => openModal(item.modalKey, event.currentTarget)}
-                    >
-                      View what&apos;s included
-                    </button>
-                  ) : null}
+          <div className="pricing-list" role="list" aria-label={pricing.servicesLabel}>
+            {pricing.examples.map((item, index) => {
+              const modalKey = pricingModalKeys[index];
+              const priceText =
+                item.price ?? fillTokens(pricing.fromTemplate, { amount: item.amount });
+              const launchText =
+                launchOfferActive && item.launchAmount
+                  ? fillTokens(pricing.launchLine, { amount: item.launchAmount })
+                  : null;
+
+              return (
+                <div className="pricing-list__row" key={item.name} role="listitem">
+                  <div className="pricing-list__item">
+                    <span className="pricing-list__label">{item.name}</span>
+                    {modalKey ? (
+                      <button
+                        className="pricing-list__action"
+                        type="button"
+                        onClick={(event) => openModal(modalKey, event.currentTarget)}
+                      >
+                        {pricing.viewIncluded}
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="pricing-list__price">
+                    <span className="pricing-list__value">{priceText}</span>
+                    {launchText ? (
+                      <span className="pricing-list__launch">{launchText}</span>
+                    ) : null}
+                  </div>
                 </div>
-                <span className="pricing-list__value">{item.price}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
-          <p className="pricing-list__note">
-            Starting prices are shown in USD. Your final project price is
-            confirmed before work begins.
-          </p>
+          <div className="pricing-list__notes">
+            {launchOfferActive ? (
+              <p className="pricing-list__note">{pricing.launchNote}</p>
+            ) : null}
+            <p className="pricing-list__note">{pricing.priceNote}</p>
+          </div>
           <button
             className="pricing-list__additions"
             type="button"
             onClick={(event) => openModal("optional-add-ons", event.currentTarget)}
           >
-            + View optional add-ons
+            {pricing.viewAddOns}
           </button>
         </section>
 
@@ -1448,15 +1205,11 @@ function PricingPage() {
             aria-labelledby="pricing-includes-title"
           >
             <div className="pricing-section__header pricing-section__header--narrow">
-              <h2 id="pricing-includes-title">Every project includes</h2>
-              <p>
-                Regardless of size, every project begins with the same
-                foundation: understanding your business, designing with
-                purpose, and building a website that is ready for launch.
-              </p>
+              <h2 id="pricing-includes-title">{pricing.includesTitle}</h2>
+              <p>{pricing.includesIntro}</p>
             </div>
             <div className="pricing-includes__grid">
-              {includedItems.map((item) => (
+              {pricing.includes.map((item) => (
                 <article className="pricing-includes__item" key={item.title}>
                   <h3>{item.title}</h3>
                   <p>{item.description}</p>
@@ -1470,15 +1223,11 @@ function PricingPage() {
             aria-labelledby="pricing-process-title"
           >
             <div className="pricing-section__header pricing-section__header--narrow">
-              <h2 id="pricing-process-title">The process</h2>
-              <p>
-                The exact timeline depends on the scope of the project, but
-                every website follows a clear sequence from the first
-                conversation to launch.
-              </p>
+              <h2 id="pricing-process-title">{pricing.processTitle}</h2>
+              <p>{pricing.processIntro}</p>
             </div>
             <div className="pricing-process__grid">
-              {processSteps.map((step, index) => (
+              {pricing.process.map((step, index) => (
                 <article className="pricing-process__item" key={step.title}>
                   <p className="pricing-process__number">
                     {String(index + 1).padStart(2, "0")}
@@ -1498,10 +1247,10 @@ function PricingPage() {
           aria-labelledby="pricing-policies-title"
         >
           <div className="pricing-section__header pricing-section__header--narrow">
-            <h2 id="pricing-policies-title">Project policies</h2>
+            <h2 id="pricing-policies-title">{pricing.policiesTitle}</h2>
           </div>
           <div className="pricing-policies__grid">
-            {projectPolicies.map((item) => (
+            {pricing.policies.map((item) => (
               <article className="pricing-policies__item" key={item.title}>
                 <p className="pricing-policies__eyebrow">{item.title}</p>
                 <h3>{item.summary}</h3>
@@ -1516,14 +1265,15 @@ function PricingPage() {
           aria-labelledby="pricing-faq-title"
         >
           <div className="pricing-section__header">
-            <h2 id="pricing-faq-title">Pricing FAQ</h2>
+            <h2 id="pricing-faq-title">{pricing.faqTitle}</h2>
           </div>
-          <PricingFaqAccordion />
+          <FaqAccordion items={pricing.faq} initiallyOpenIndex={-1} />
         </section>
       </section>
 
       <PricingDetailModal
         modal={activeModal}
+        modalKey={activeModalKey}
         onClose={closeModal}
         returnFocusRef={returnFocusRef}
       />
@@ -1535,29 +1285,29 @@ function PricingPage() {
 }
 
 function FaqPage() {
+  const { lang, t } = useLanguage();
+  const faq = t.faq;
+
   return (
     <>
       <section className="faq-page">
         <section className="faq-hero" aria-labelledby="faq-heading">
           <div className="faq-hero__content">
-            <h1 id="faq-heading">Frequently asked questions</h1>
-            <p>
-              Answers to common questions about services, pricing, the project
-              process and what happens after launch.
-            </p>
+            <h1 id="faq-heading">{faq.title}</h1>
+            <p>{faq.intro}</p>
           </div>
         </section>
 
-        <section className="faq-page__accordion" aria-label="Frequently asked questions">
-          <FaqAccordion items={faqPageItems} initiallyOpenIndex={-1} />
+        <section className="faq-page__accordion" aria-label={faq.listLabel}>
+          <FaqAccordion items={faq.items} initiallyOpenIndex={-1} />
         </section>
       </section>
 
       <FinalCta
-        title="Still have a question?"
-        copy="Every project is different. If you cannot find the answer you need, feel free to get in touch and tell me a little about what you are planning."
-        buttonLabel="Get in touch"
-        buttonHref="/contact/"
+        title={faq.ctaTitle}
+        copy={faq.ctaCopy}
+        buttonLabel={faq.ctaButton}
+        buttonHref={pathFor("contact", lang)}
       />
       <SignatureFooter />
     </>
@@ -1565,32 +1315,27 @@ function FaqPage() {
 }
 
 function ContactPage() {
+  const { t } = useLanguage();
+  const contact = t.contact;
+
   return (
     <>
       <section className="contact-page">
         <section className="contact-layout" aria-labelledby="contact-heading">
           <div className="contact-layout__info">
-            <h1 id="contact-heading">Get in touch</h1>
-            <p className="contact-layout__intro">
-              Have a question, want to discuss an idea or simply need a little
-              more information? Send me a message and I&apos;ll get back to you
-              as soon as I can.
-            </p>
+            <h1 id="contact-heading">{contact.title}</h1>
+            <p className="contact-layout__intro">{contact.intro}</p>
 
             <div className="contact-details">
               <div className="contact-details__item">
-                <p className="contact-details__label">Response time</p>
-                <p>I aim to reply to all enquiries within 1-2 business days.</p>
+                <p className="contact-details__label">{contact.responseLabel}</p>
+                <p>{contact.responseText}</p>
               </div>
 
               <div className="contact-details__item">
-                <p className="contact-details__label">Ready to discuss a website?</p>
+                <p className="contact-details__label">{contact.projectLabel}</p>
                 <p>
-                  For a more detailed project enquiry, use the{" "}
-                  <a className="inline-link" href={START_PROJECT_PATH}>
-                    Start a Project
-                  </a>{" "}
-                  form.
+                  <RichText text={contact.projectText} linkClassName="inline-link" />
                 </p>
               </div>
             </div>
@@ -1608,36 +1353,27 @@ function ContactPage() {
 }
 
 function ProjectPage() {
+  const { t } = useLanguage();
+  const project = t.project;
+
   return (
     <>
       <section className="contact-page">
         <section className="contact-layout" aria-labelledby="project-heading">
           <div className="contact-layout__info">
-            <h1 id="project-heading">Start a project</h1>
-            <p className="contact-layout__intro">
-              Tell me a little about your business, what you need and what you
-              would like the website to achieve. I&apos;ll review the details and
-              get back to you with the next steps.
-            </p>
+            <h1 id="project-heading">{project.title}</h1>
+            <p className="contact-layout__intro">{project.intro}</p>
 
             <div className="contact-details">
               <div className="contact-details__item">
-                <p className="contact-details__label">What happens next?</p>
-                <p>
-                  I&apos;ll review your enquiry and reply within 1-2 business days.
-                  From there, we can arrange a conversation and discuss the
-                  scope in more detail.
-                </p>
+                <p className="contact-details__label">{project.nextLabel}</p>
+                <p>{project.nextText}</p>
               </div>
 
               <div className="contact-details__item">
-                <p className="contact-details__label">Not ready to start?</p>
+                <p className="contact-details__label">{project.notReadyLabel}</p>
                 <p>
-                  For general questions or smaller enquiries, use the{" "}
-                  <a className="inline-link" href="/contact/">
-                    Contact page
-                  </a>
-                  .
+                  <RichText text={project.notReadyText} linkClassName="inline-link" />
                 </p>
               </div>
             </div>
@@ -1654,37 +1390,35 @@ function ProjectPage() {
   );
 }
 
+const pageComponents = {
+  home: HomePage,
+  pricing: PricingPage,
+  faq: FaqPage,
+  contact: ContactPage,
+  project: ProjectPage,
+};
+
 function App() {
-  const normalizedPath =
-    window.location.pathname.replace(/\/+$/, "") || "/";
-  const isPricingPage = normalizedPath === "/pricing";
-  const isFaqPage = normalizedPath === "/faq";
-  const isContactPage = normalizedPath === "/contact";
-  const isProjectPage = normalizedPath === "/start-a-project";
+  const { page, lang } = resolveRoute(window.location.pathname);
+  const PageComponent = pageComponents[page];
+  const languageValue = React.useMemo(
+    () => ({ lang, t: content[lang] }),
+    [lang],
+  );
 
   return (
-    <div className="site-shell">
-      <SiteNav />
-      <main
-        className={`page-content ${
-          isPricingPage || isFaqPage || isContactPage || isProjectPage
-            ? "page-content--pricing"
-            : ""
-        }`.trim()}
-      >
-        {isPricingPage ? (
-          <PricingPage />
-        ) : isFaqPage ? (
-          <FaqPage />
-        ) : isContactPage ? (
-          <ContactPage />
-        ) : isProjectPage ? (
-          <ProjectPage />
-        ) : (
-          <HomePage />
-        )}
-      </main>
-    </div>
+    <LanguageContext.Provider value={languageValue}>
+      <div className="site-shell">
+        <SiteNav page={page} />
+        <main
+          className={`page-content ${
+            page === "home" ? "" : "page-content--pricing"
+          }`.trim()}
+        >
+          <PageComponent />
+        </main>
+      </div>
+    </LanguageContext.Provider>
   );
 }
 

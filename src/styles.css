@@ -68,6 +68,8 @@ button:focus-visible {
 
 .site-shell {
   min-height: 100vh;
+  /* The hero graphic bleeds past the right edge by design; clip it so the page never scrolls sideways. */
+  overflow-x: clip;
 }
 
 .site-header,
@@ -125,6 +127,7 @@ button:focus-visible {
   font-size: 1.04rem;
   font-weight: 400;
   line-height: 1.15;
+  white-space: nowrap;
   transition: color 160ms ease;
 }
 
@@ -149,6 +152,47 @@ button:focus-visible {
 .site-nav__link:hover::after,
 .site-nav__link:focus-visible::after {
   transform: scaleX(1);
+}
+
+.cta-pill--nav {
+  white-space: nowrap;
+}
+
+.language-toggle {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 0.9rem;
+  margin-left: 0.6rem;
+  font-size: 0.9rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Hairline divider between the "Start a project" button and the toggle. */
+.language-toggle::before {
+  content: "";
+  width: 1px;
+  height: 18px;
+  margin-right: 0.3rem;
+  background: var(--color-border);
+}
+
+.language-toggle__link {
+  padding-block: 0.3rem;
+  color: var(--color-text-secondary);
+  transition: color 160ms ease;
+}
+
+.language-toggle__link:hover {
+  color: var(--color-text-primary);
+}
+
+.language-toggle__link[aria-current="true"] {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
 }
 
 .cta-pill {
@@ -267,13 +311,19 @@ button:focus-visible {
 }
 
 .work-gallery {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--gallery-gap);
-  margin-top: -3rem;
+  /* The hero artwork has ~12% transparent padding at the bottom of its box (and
+     the desktop hero image is nudged up 0.8rem), so this small margin leaves a
+     visible gap of roughly 80px on desktop, 56px on tablet and 40px on phones. */
+  margin-top: 0.5rem;
 }
 
+/* Every card is one third of the row; rows with fewer cards stay centered. */
 .work-gallery__item {
+  flex: 0 0 calc((100% - (2 * var(--gallery-gap))) / 3);
   margin: 0;
   min-width: 0;
 }
@@ -281,15 +331,14 @@ button:focus-visible {
 .work-gallery__frame {
   aspect-ratio: 1 / 0.72;
   overflow: hidden;
-  border: 1px solid var(--color-border);
   border-radius: var(--frame-radius);
-  background: rgba(255, 255, 255, 0.24);
 }
 
 .work-gallery__frame img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: left top;
 }
 
 .work-gallery__meta {
@@ -323,6 +372,39 @@ button:focus-visible {
   font-size: 0.97rem;
   line-height: 1.45;
 }
+
+.work-gallery__link {
+  display: block;
+  color: inherit;
+}
+
+/* Hover and keyboard focus: the image eases in slightly inside its clipped
+   frame and the arrow nudges right. No shadow, colour change or layout shift. */
+@media (prefers-reduced-motion: no-preference) {
+  .work-gallery__frame img,
+  .work-gallery__arrow {
+    transition: transform 400ms ease-out;
+  }
+
+  .work-gallery__link:focus-visible .work-gallery__frame img {
+    transform: scale(1.03);
+  }
+
+  .work-gallery__link:focus-visible .work-gallery__arrow {
+    transform: translateX(4px);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .work-gallery__link:hover .work-gallery__frame img {
+    transform: scale(1.03);
+  }
+
+  .work-gallery__link:hover .work-gallery__arrow {
+    transform: translateX(4px);
+  }
+}
+
 
 .editorial-section {
   display: grid;
@@ -979,6 +1061,28 @@ button:focus-visible {
   font-size: 1.02rem;
 }
 
+.pricing-list__price {
+  display: grid;
+  gap: 0.2rem;
+  justify-items: end;
+}
+
+.pricing-list__value,
+.pricing-list__launch {
+  white-space: nowrap;
+}
+
+.pricing-list__launch {
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.pricing-list__notes {
+  display: grid;
+  gap: 0.35rem;
+}
+
 .pricing-list__action,
 .pricing-list__additions,
 .pricing-modal__close {
@@ -1342,12 +1446,6 @@ button:focus-visible {
   margin: 0;
 }
 
-@media (min-width: 961px) {
-  .work-gallery {
-    margin-top: -3rem;
-  }
-}
-
 @media (max-width: 1080px) {
   .site-nav__actions {
     gap: 1.1rem;
@@ -1422,6 +1520,10 @@ button:focus-visible {
 }
 
 @media (max-width: 960px) {
+  .work-gallery {
+    margin-top: 0.4rem;
+  }
+
   .site-nav,
   .hero {
     grid-template-columns: minmax(0, 1fr);
@@ -1473,10 +1575,6 @@ button:focus-visible {
     transform: none;
   }
 
-  .work-gallery {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .pricing-page {
     gap: 4rem;
   }
@@ -1512,6 +1610,10 @@ button:focus-visible {
 }
 
 @media (max-width: 720px) {
+  .work-gallery {
+    margin-top: 0.75rem;
+  }
+
   .site-header {
     padding-top: 1.25rem;
   }
@@ -1540,8 +1642,8 @@ button:focus-visible {
     max-height: 280px;
   }
 
-  .work-gallery {
-    grid-template-columns: 1fr;
+  .work-gallery__item {
+    flex-basis: 100%;
   }
 
   .work-gallery__frame {
@@ -1622,6 +1724,10 @@ button:focus-visible {
 
   .pricing-list__value {
     text-align: left;
+  }
+
+  .pricing-list__price {
+    justify-items: start;
   }
 
   .pricing-modal {
