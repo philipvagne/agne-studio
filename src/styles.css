@@ -853,6 +853,14 @@ button:focus-visible {
   gap: 0.95rem;
 }
 
+/* After a successful submit, focus is moved here by code so screen readers
+   announce it. The heading is not in the tab order, so it needs no visible
+   outline; links, buttons and fields keep theirs. */
+.contact-success__title:focus,
+.contact-success__title:focus-visible {
+  outline: none;
+}
+
 .contact-success__title {
   margin: 0;
   font-size: clamp(1.9rem, 3vw, 2.4rem);
